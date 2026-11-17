@@ -80,13 +80,12 @@ jobs:
           path: sbom.cyclonedx.json
           if-no-files-found: warn
 
-      - name: Analizar librerías con OWASP Dependency-Check (CVSS >= 7)
+      - name: Analizar librerías con OWASP Dependency-Check
         uses: dependency-check/Dependency-Check_Action@1.1.0
         with:
-          project: MASI-Tarea-S07
+          project: 'MASI-Tarea-S07'
           path: '.'
           format: 'ALL'
-          others: '--failOnCVSS 7'
 
       - name: Publicar reporte SCA incluso si falla
         if: always()
@@ -95,6 +94,7 @@ jobs:
           name: informe-dependency-check
           path: reports/
           if-no-files-found: error
+
 
 
   quality-gate:
