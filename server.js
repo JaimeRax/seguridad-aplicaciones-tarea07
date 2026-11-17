@@ -17,13 +17,14 @@ const server = http.createServer((req, res) => {
   }
   if (url.pathname === '/calculate') {
     const expression = url.searchParams.get('expr') || '';
-    try {
-      // DEMOSTRACIÓN: CWE-95, evaluación de entrada no confiable.
-      const result = eval(expression);
-      respond(res, 200, { result });
-    } catch {
-      respond(res, 400, { error: 'Expresión inválida' });
+    // Remediación: permitir únicamente sumas de enteros (sin evaluación dinámica).
+    const match = /^([0-9]{1,4})\+([0-9]{1,4})$/.exec(expression);
+    if (!match) {
+      respond(res, 400, { error: 'Solo se admiten sumas de enteros (ej. 2+3)' });
+      return;
     }
+    const result = Number(match[1]) + Number(match[2]);
+    respond(res, 200, { result });
     return;
   }
   respond(res, 404, { error: 'Ruta no encontrada' });
