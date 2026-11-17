@@ -86,17 +86,16 @@ jobs:
           project: MASI-Tarea-S07
           path: '.'
           format: 'ALL'
-          out: 'reports/dependency-check'
-          args: >
-            --failOnCVSS 7
+          others: '--failOnCVSS 7'
 
       - name: Publicar reporte SCA incluso si falla
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: informe-dependency-check
-          path: reports/dependency-check/
-          if-no-files-found: warn
+          path: reports/
+          if-no-files-found: error
+
 
   quality-gate:
     name: Quality Gate - Decisión final
