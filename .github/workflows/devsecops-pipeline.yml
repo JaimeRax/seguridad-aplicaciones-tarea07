@@ -95,6 +95,8 @@ jobs:
           path: reports/
           if-no-files-found: error
 
+      - name: Aplicar Quality Gate SCA (CVSS >= 7)
+        run: python scripts/gate_sca.py reports/dependency-check-report.json
 
 
   quality-gate:
