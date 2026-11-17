@@ -1,0 +1,10 @@
+rules:
+  - id: masi-s07-no-eval
+    message: "CWE-95: eval() permite evaluar código dinámico; usar un parser de entradas permitidas."
+    languages: [javascript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: CWE-95
+      technology: [nodejs]
+    pattern: eval(...)
