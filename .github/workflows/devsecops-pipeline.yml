@@ -1,0 +1,118 @@
+name: Tarea S07 - DevSecOps SAST SCA SBOM
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sast:
+    name: SAST - Semgrep
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar Semgrep
+        run: python -m pip install semgrep
+
+      - name: Escanear código (reglas OWASP y regla propia)
+        run: |
+          mkdir -p reports
+          semgrep scan \
+            --config p/security-audit \
+            --config p/owasp-top-ten \
+            --config .semgrep/rules.yml \
+            --exclude node_modules \
+            --metrics=off \
+            --json --output reports/semgrep-results.json .
+
+      - name: Aplicar Quality Gate SAST (ERROR/HIGH/CRITICAL)
+        run: python scripts/gate_semgrep.py reports/semgrep-results.json
+
+      - name: Publicar informe Semgrep incluso si falla
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: informe-semgrep-json
+          path: reports/semgrep-results.json
+          if-no-files-found: warn
+
+  sca:
+    name: SCA - Dependency-Check y SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Resolver dependencias sin scripts de instalación
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Generar SBOM CycloneDX JSON con Syft
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+          upload-artifact: false
+
+      - name: Publicar SBOM incluso si falla SCA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cyclonedx.json
+          if-no-files-found: warn
+
+      - name: Analizar librerías con OWASP Dependency-Check (CVSS >= 7)
+        uses: dependency-check/Dependency-Check_Action@1.1.0
+        with:
+          project: MASI-Tarea-S07
+          path: '.'
+          format: 'ALL'
+          out: 'reports/dependency-check'
+          args: >
+            --failOnCVSS 7
+
+      - name: Publicar reporte SCA incluso si falla
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: informe-dependency-check
+          path: reports/dependency-check/
+          if-no-files-found: warn
+
+  quality-gate:
+    name: Quality Gate - Decisión final
+    needs: [sast, sca]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluar resultados de SAST y SCA
+        env:
+          SAST_RESULT: ${{ needs.sast.result }}
+          SCA_RESULT: ${{ needs.sca.result }}
+        run: |
+          echo "SAST=${SAST_RESULT}"
+          echo "SCA=${SCA_RESULT}"
+          if [[ "${SAST_RESULT}" != "success" || "${SCA_RESULT}" != "success" ]]; then
+            echo "QUALITY GATE: FAILED"
+            exit 1
+          fi
+          echo "QUALITY GATE: SUCCESS"
