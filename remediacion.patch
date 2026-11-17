@@ -1,0 +1,56 @@
+--- a/server.js
++++ b/server.js
+@@ -17,13 +17,14 @@
+   }
+   if (url.pathname === '/calculate') {
+     const expression = url.searchParams.get('expr') || '';
+-    try {
+-      // DEMOSTRACIÓN: CWE-95, evaluación de entrada no confiable.
+-      const result = eval(expression);
+-      respond(res, 200, { result });
+-    } catch {
+-      respond(res, 400, { error: 'Expresión inválida' });
++    // Remediación: gramática de suma limitada, sin ejecutar código dinámico.
++    const match = /^([0-9]{1,4})\+([0-9]{1,4})$/.exec(expression);
++    if (!match) {
++      respond(res, 400, { error: 'Solo se admiten sumas de enteros (ej. 2+3)' });
++      return;
+     }
++    const result = Number(match[1]) + Number(match[2]);
++    respond(res, 200, { result });
+     return;
+   }
+   respond(res, 404, { error: 'Ruta no encontrada' });
+--- a/package.json
++++ b/package.json
+@@ -11,6 +11,6 @@
+     "node": ">=20"
+   },
+   "dependencies": {
+-    "lodash": "4.17.20"
++    "lodash": "4.17.21"
+   }
+ }
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -8,16 +8,16 @@
+       "name": "masi-s07-devsecops-lab",
+       "version": "1.0.0",
+       "dependencies": {
+-        "lodash": "4.17.20"
++        "lodash": "4.17.21"
+       },
+       "engines": {
+         "node": ">=20"
+       }
+     },
+     "node_modules/lodash": {
+-      "version": "4.17.20",
+-      "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.20.tgz",
+-      "integrity": "sha512-PlhdFcillOINfeV7Ni6oF1TAEayyZBoZ8bcshTHqOYJYlrqzRK5hagpagky5o4HfCzzd1TRkXPMFq6cKk9rGmA=="
++      "version": "4.17.21",
++      "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz",
++      "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg=="
+     }
+   }
+ }

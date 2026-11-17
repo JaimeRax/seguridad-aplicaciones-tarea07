@@ -1,0 +1,16 @@
+{
+  "name": "masi-s07-devsecops-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Laboratorio SAST SCA y cadena de suministro - Semana 07",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "lodash": "4.17.20"
+  }
+}
