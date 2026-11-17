@@ -1,0 +1,1 @@
+Guardar aquí capturas REALES de GitHub Actions (FAILED y SUCCESS). No modificar ni fabricar resultados.
